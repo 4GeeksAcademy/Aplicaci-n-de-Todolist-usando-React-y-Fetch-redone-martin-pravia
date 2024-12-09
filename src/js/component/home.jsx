@@ -26,6 +26,34 @@ useEffect(() => {
     fetchApi(); 
 }, []);
 
+
+
+const addTask = async (e) => {
+    if (e.key === "Enter" && e.target.value !== "") {
+        const newTask = { label: e.target.value, done: false };
+
+        try {
+            const response = await fetch(myApi, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(newTask),
+            });
+
+            if (!response.ok) {
+                throw new Error("Error en la solicitud POST");
+            }
+
+            const data = await response.json();
+            setTasks((tasks) => [...tasks, newTask]); 
+            e.target.value = ""; 
+        } catch (error) {
+            console.error("Error al realizar POST:", error);
+        }
+    }
+};
+
   return (
 	<>
 	<div className="row d-flex justify-content-center">
@@ -58,5 +86,6 @@ useEffect(() => {
 		  </>
   )
 };
+
 
 export default Home;
