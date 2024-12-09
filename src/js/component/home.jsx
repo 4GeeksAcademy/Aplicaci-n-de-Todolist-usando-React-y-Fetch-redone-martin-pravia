@@ -1,74 +1,106 @@
 import React, { useEffect, useState } from "react";
 
-
-
 //create your first component
 const Home = () => {
-const [tasks, setTasks] = useState([]);
-const api = "https://playground.4geeks.com/todo"
-const lastApi = "/users/martopravia"
-const myApi = `${api}${lastApi}`
+  const [tasks, setTasks] = useState([]);
+  const api = "https://playground.4geeks.com/todo";
+  const lastApi = "/users/martopravia";
+  const myApi = `${api}${lastApi}`;
 
-useEffect(() => {
+  useEffect(() => {
     const fetchApi = async () => {
-        try {
-            const response = await fetch(myApi);
-            if (!response.ok) {
-                throw new Error("Error al obtener los datos de la API");
-            }
-            const data = await response.json();
-            console.log("Datos obtenidos:", data);
-            setTasks(data.todos);
-        } catch (error) {
-            console.error("Error al realizar el fetch:", error);
+      try {
+        const response = await fetch(myApi);
+        if (!response.ok) {
+          throw new Error("Error al obtener los datos de la API");
         }
+        const data = await response.json();
+        console.log("Datos obtenidos:", data);
+        setTasks(data.todos);
+      } catch (error) {
+        console.error("Error al realizar el fetch:", error);
+      }
     };
-    fetchApi(); 
-}, []);
+    fetchApi();
+  }, []);
 
-
-
-const addTask = async (e) => {
+  const addTask = async (e) => {
     if (e.key === "Enter" && e.target.value !== "") {
-        const newTask = { label: e.target.value, done: false };
+      const newTask = { label: e.target.value, done: false };
 
-        try {
-            const response = await fetch(myApi, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(newTask),
-            });
+      try {
+        const response = await fetch(`${api}/todos/martopravia`, {
+          method: "POST",
+          body: JSON.stringify(newTask),
+          headers: { "Content-Type": "application/json" },
+        });
+        if (!response.ok) throw new Error("Error al agregar tarea");
 
-            if (!response.ok) {
-                throw new Error("Error en la solicitud POST");
-            }
-
-            const data = await response.json();
-            setTasks((tasks) => [...tasks, newTask]); 
-            e.target.value = ""; 
-        } catch (error) {
-            console.error("Error al realizar POST:", error);
-        }
+        const addedTask = await response.json();
+        setTasks((tasks) => [...tasks, addedTask]);
+        e.target.value = "";
+      } catch (error) {
+        console.error("Fatalidad :", error);
+      }
     }
-};
+  };
+
+  const deleteData = async (taskID) => {
+    try {
+      const response = await fetch(`${api}/todos/${taskID}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al realizar el DELETE");
+      }
+
+      setTasks((tasks) => tasks.filter((task) => task.id !== taskID));
+    } catch (error) {
+      console.log("Error al realizar DELETE: ", error);
+    }
+  };
+
+  const deleteAllTasks = async () => {
+    try {
+      for (const task of tasks) {
+        const response = await fetch(`${api}/todos/${task.id}`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Error al eliminar la tarea");
+        }
+      }
+
+      setTasks([]);
+    } catch (error) {
+      console.log("Error al eliminar las tareas: ", error);
+    }
+  };
 
   return (
-	<>
-	<div className="row d-flex justify-content-center">
-	  <div className="col-8">
-		<label className="form-label d-flex justify-content-center align-items-center">
-		  <h1 className="display-3 title"> To Do List</h1>
-		</label>
-		<input
-		  type="text"
-		  className="form-control"
+    <>
+      <div className="row d-flex justify-content-center">
+        <div className="col-8">
+          <label className="form-label d-flex justify-content-center align-items-center">
+            <h1 className="display-3 title"> To Do List</h1>
+          </label>
+          <input
+            type="text"
+            className="form-control"
             id="inputText"
             aria-describedby="InputText"
             placeholder="Insert here your item to the list"
-		  />
-		   <ul className="list-group">
+            onKeyDown={addTask}
+          />
+          <ul className="list-group">
             {tasks.map((task) => {
               return (
                 <li
@@ -76,16 +108,30 @@ const addTask = async (e) => {
                   key={task.id}
                 >
                   {task.label}
-                  <i className="bi bi-trash trash " ></i>
+                  <i
+                    className="bi bi-trash trash"
+                    onClick={() => deleteData(task.id)}
+                  >
+                    {" "}
+                  </i>
                 </li>
               );
             })}
+            <li className="list-group-item">
+              {tasks.length !== 0
+                ? `To do's to go: ${tasks.length}`
+                : "There's nothing to do :)"}
+            </li>
           </ul>
-		   </div>
-		   </div>
-		  </>
-  )
+          <div className="d-flex justify-content-center mt-4">
+            <button className="btn btn-danger" onClick={deleteAllTasks}>
+              Evadir todo, limpiar!
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
 };
-
 
 export default Home;
